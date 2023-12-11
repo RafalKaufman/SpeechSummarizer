@@ -41,11 +41,8 @@ class DialogueTranscription():
         return whole_text
     def get_dialogue_transcription(self):
         self.transcription = self.chunk_processing(self.splitting_on_silence())
+        return self.transcription
     def __str__(self):
         return self.transcription
     def __len__(self):
         return len(self.transcription)
-dial1 = DialogueTranscription("dailylife022.wav")
-dial1.get_dialogue_transcription()
-print(dial1)
-print(len(dial1))
