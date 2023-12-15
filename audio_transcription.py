@@ -5,44 +5,48 @@ from pydub.silence import split_on_silence
 
 class DialogueTranscription():
 
-    def __init__(self, path):
-        self.path = path
-        self.recognizer = sr.Recognizer()
-        self.transcription = ""
+    def __init__(self, audio_path):
+        self.audio_path = audio_path
+        self.text_recognizer = sr.Recognizer()
+        self.dialogue_transcription = ""
 
-    def transcribe(self,filename):
-        with sr.AudioFile(filename) as source:
-            audio_listened = self.recognizer.record(source)
-            text = self.recognizer.recognize_google(audio_listened)
-        return text
+    def transcribe(self, audio_file_name):
+        with sr.AudioFile(audio_file_name) as audio_source:
+            audio_listened = self.text_recognizer.record(audio_source)
+            transcription = self.text_recognizer.recognize_google(audio_listened)
+        return transcription
 
-    def splitting_on_silence(self):
-        sound = AudioSegment.from_file(self.path)
-        chunks = split_on_silence(
-            sound, min_silence_len = 500,
-            silence_thresh = sound.dBFS-14, keep_silence=500)
-        return chunks
+    def splitting_audio_on_silence(self):
+        entire_recording = AudioSegment.from_file(self.audio_path)
+        #min_silence_len and keep_silence values are represented in miliseconds
+        audio_chunks = split_on_silence(
+            entire_recording, min_silence_len = 500,
+            silence_thresh = sound.dBFS-14, keep_silence = 500)
+        return audio_chunks
 
-    def chunk_processing(self,chunks):
-        folder_name = f"{self.path}-chunks"
-        if not os.path.isdir(folder_name):
-            os.mkdir(folder_name)
-        whole_text = ""
-        for i, audio_chunk in enumerate(chunks, start=1):
-            chunk_filename = os.path.join(folder_name, f"chunk{i}.wav")
+    def audio_chunk_processing(self, audio_chunks):
+        chunks_folder_name = f"{self.audio_path}-chunks"
+        if not os.path.isdir(chunks_folder_name):
+            os.mkdir(chunks_folder_name)
+        whole_transcription = ""
+        for i, audio_chunk in enumerate(audio_chunks, start=1):
+            chunk_filename = os.path.join(chunks_folder_name, f"chunk{i}.wav")
             audio_chunk.export(chunk_filename, format="wav")
             try:
-                text = self.transcribe(chunk_filename)
+                chunk_transcription = self.transcribe(chunk_filename)
             except sr.UnknownValueError as e:
                 print("Error:", str(e))
             else:
-                text = f"{text.capitalize()}. "
-                whole_text += text
-        return whole_text
+                chunk_transcription = f"{chunk_transcription.capitalize()}. "
+                whole_transcription += chunk_transcription
+        return whole_transcription
     def get_dialogue_transcription(self):
-        self.transcription = self.chunk_processing(self.splitting_on_silence())
-        return self.transcription
+        self.dialogue_transcription = self.audio_chunk_processing(self.splitting_audio_on_silence())
     def __str__(self):
-        return self.transcription
+        return self.dialogue_transcription
     def __len__(self):
-        return len(self.transcription)
+        return len(self.dialogue_transcription)
+dial1 = DialogueTranscription("dailylife022.wav")
+dial1.get_dialogue_transcription()
+print(dial1)
+print(len(dial1))
