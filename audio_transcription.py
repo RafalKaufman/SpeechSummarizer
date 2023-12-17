@@ -5,12 +5,12 @@ from pydub.silence import split_on_silence
 
 class DialogueTranscription():
 
-    def __init__(self, audio_path):
+    def __init__(self, audio_path : str):
         self.audio_path = audio_path
         self.text_recognizer = sr.Recognizer()
         self.dialogue_transcription = ""
 
-    def transcribe(self, audio_file_name):
+    def transcribe(self, audio_file_name : str) -> str:
         with sr.AudioFile(audio_file_name) as audio_source:
             audio_listened = self.text_recognizer.record(audio_source)
             transcription = self.text_recognizer.recognize_google(audio_listened)
@@ -24,7 +24,7 @@ class DialogueTranscription():
             silence_thresh = sound.dBFS-14, keep_silence = 500)
         return audio_chunks
 
-    def audio_chunk_processing(self, audio_chunks):
+    def audio_chunk_processing(self, audio_chunks : type(audio_chunks) -> str:
         chunks_folder_name = f"{self.audio_path}-chunks"
         if not os.path.isdir(chunks_folder_name):
             os.mkdir(chunks_folder_name)
@@ -40,9 +40,9 @@ class DialogueTranscription():
                 chunk_transcription = f"{chunk_transcription.capitalize()}. "
                 whole_transcription += chunk_transcription
         return whole_transcription
-    def get_dialogue_transcription(self):
-        self.dialogue_transcription = self.audio_chunk_processing(self.splitting_audio_on_silence())
-    def __str__(self):
+    def get_dialogue_transcription(self) -> str:
+        if self.dialogue_transcription == "":
+            self.dialogue_transcription = self.audio_chunk_processing(self.splitting_audio_on_silence())
         return self.dialogue_transcription
     def __len__(self):
         return len(self.dialogue_transcription)
