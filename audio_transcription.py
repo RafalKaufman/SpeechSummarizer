@@ -21,10 +21,10 @@ class DialogueTranscription():
         #min_silence_len and keep_silence values are represented in miliseconds
         audio_chunks = split_on_silence(
             entire_recording, min_silence_len = 500,
-            silence_thresh = sound.dBFS-14, keep_silence = 500)
+            silence_thresh = entire_recording.dBFS-14, keep_silence = 500)
         return audio_chunks
 
-    def audio_chunk_processing(self, audio_chunks : type(audio_chunks) -> str:
+    def audio_chunk_processing(self, audio_chunks : list) -> str:
         chunks_folder_name = f"{self.audio_path}-chunks"
         if not os.path.isdir(chunks_folder_name):
             os.mkdir(chunks_folder_name)
