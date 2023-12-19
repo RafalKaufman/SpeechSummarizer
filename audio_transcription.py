@@ -52,7 +52,7 @@ class DialogueTranscription:
             )
         return self.dialogue_transcription
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.dialogue_transcription)
 
 
