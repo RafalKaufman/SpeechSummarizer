@@ -57,6 +57,4 @@ class DialogueTranscription:
 
 
 dial1 = DialogueTranscription("dailylife022.wav")
-dial1.get_dialogue_transcription()
-print(dial1)
-print(len(dial1))
+print(dial1.get_dialogue_transcription())
