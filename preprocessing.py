@@ -136,7 +136,6 @@ def clean_dialogue(raw_dialogue):
     cleaned_dialogue = raw_dialogue.lower()
     cleaned_dialogue = re.sub(r"\([^)]*\)", "", cleaned_dialogue)
     cleaned_dialogue = re.sub("[\n\t\r\f\v]|#.*#|:", " ", cleaned_dialogue)
-    cleaned_dialogue = re.sub(" +", " ", cleaned_dialogue)
     cleaned_dialogue = " ".join(
         [
             contraction_mapping[t] if t in contraction_mapping else t
@@ -148,7 +147,29 @@ def clean_dialogue(raw_dialogue):
     return cleaned_dialogue
 
 
-train_data["dialogue"] = [
+def clean_summary(raw_summary):
+    cleaned_summary = raw_summary.lower()
+    cleaned_summary = re.sub(r"\([^)]*\)", "", cleaned_summary)
+    cleaned_summary = re.sub("'s", "", cleaned_summary)
+    cleaned_summary = " ".join(
+        [
+            contraction_mapping[t] if t in contraction_mapping else t
+            for t in cleaned_summary.split(" ")
+        ]
+    )
+    cleaned_summary = re.sub("[^a-zA-Z]", " ", cleaned_summary)
+    return cleaned_summary.split()
+
+
+train_data["cleaned_summary"] = [
+    clean_summary(summary) for summary in train_data["summary"]
+]
+
+train_data["cleaned_dialogue"] = [
     clean_dialogue(dialogue) for dialogue in train_data["dialogue"]
 ]
-print(train_data.head())
+
+print(train_data.dialogue[0])
+print(train_data.cleaned_dialogue[0])
+print(train_data.summary[0])
+print(train_data.cleaned_summary[0])
