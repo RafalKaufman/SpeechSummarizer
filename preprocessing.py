@@ -1,5 +1,6 @@
 import re
 
+import numpy as np
 import pandas as pd
 from nltk.corpus import stopwords
 
@@ -136,6 +137,7 @@ def clean_dialogue(raw_dialogue):
     cleaned_dialogue = raw_dialogue.lower()
     cleaned_dialogue = re.sub(r"\([^)]*\)", "", cleaned_dialogue)
     cleaned_dialogue = re.sub("[\n\t\r\f\v]|#.*#|:", " ", cleaned_dialogue)
+    cleaned_dialogue = re.sub(" +", " ", cleaned_dialogue)
     cleaned_dialogue = " ".join(
         [
             contraction_mapping[t] if t in contraction_mapping else t
@@ -143,7 +145,9 @@ def clean_dialogue(raw_dialogue):
         ]
     )
     cleaned_dialogue = re.sub("[^a-zA-Z]", " ", cleaned_dialogue)
-    cleaned_dialogue = [w for w in cleaned_dialogue.split() if w not in stop_words]
+    cleaned_dialogue = " ".join(
+        [w for w in cleaned_dialogue.split() if w not in stop_words]
+    )
     return cleaned_dialogue
 
 
@@ -158,16 +162,22 @@ def clean_summary(raw_summary):
         ]
     )
     cleaned_summary = re.sub("[^a-zA-Z]", " ", cleaned_summary)
-    return cleaned_summary.split()
+    cleaned_summary = re.sub(" +", " ", cleaned_summary)
+    cleaned_summary = "_START_ " + cleaned_summary + " _END_"
+    return cleaned_summary
 
+
+train_data["cleaned_dialogue"] = [
+    clean_dialogue(dialogue) for dialogue in train_data["dialogue"]
+]
 
 train_data["cleaned_summary"] = [
     clean_summary(summary) for summary in train_data["summary"]
 ]
 
-train_data["cleaned_dialogue"] = [
-    clean_dialogue(dialogue) for dialogue in train_data["dialogue"]
-]
+train_data["cleaned_dialogue"].replace("", np.nan, inplace=True)
+train_data["cleaned_summary"].replace("", np.nan, inplace=True)
+train_data.dropna(axis=0, inplace=True)
 
 print(train_data.dialogue[0])
 print(train_data.cleaned_dialogue[0])
