@@ -1,13 +1,11 @@
 import re
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from nltk.corpus import stopwords
 
-train_data = pd.read_csv("data\\train.csv")
-train_data.set_index("id", drop=True, inplace=True)
-train_data.drop_duplicates(subset="dialogue", inplace=True)
-train_data.dropna(axis=0, inplace=True)
 contraction_mapping = {
     "ain't": "is not",
     "aren't": "are not",
@@ -133,9 +131,10 @@ contraction_mapping = {
 stop_words = set(stopwords.words("english"))
 
 
-def clean_dialogue(raw_dialogue):
+def clean_dialogue(raw_dialogue: str) -> str:
     cleaned_dialogue = raw_dialogue.lower()
     cleaned_dialogue = re.sub(r"\([^)]*\)", "", cleaned_dialogue)
+    cleaned_dialogue = re.sub("'ll", " will", cleaned_dialogue)
     cleaned_dialogue = re.sub("[\n\t\r\f\v]|#.*#|:", " ", cleaned_dialogue)
     cleaned_dialogue = re.sub(" +", " ", cleaned_dialogue)
     cleaned_dialogue = " ".join(
@@ -151,9 +150,10 @@ def clean_dialogue(raw_dialogue):
     return cleaned_dialogue
 
 
-def clean_summary(raw_summary):
+def clean_summary(raw_summary: str) -> str:
     cleaned_summary = raw_summary.lower()
     cleaned_summary = re.sub(r"\([^)]*\)", "", cleaned_summary)
+    cleaned_summary = re.sub("'ll", " will", cleaned_summary)
     cleaned_summary = re.sub("'s", "", cleaned_summary)
     cleaned_summary = " ".join(
         [
@@ -167,19 +167,46 @@ def clean_summary(raw_summary):
     return cleaned_summary
 
 
-train_data["cleaned_dialogue"] = [
-    clean_dialogue(dialogue) for dialogue in train_data["dialogue"]
-]
+def clean_dataset(dataset: pd.DataFrame) -> pd.DataFrame:
+    dataset.set_index("id", drop=True, inplace=True)
+    dataset.drop_duplicates(subset="dialogue", inplace=True)
+    dataset.dropna(axis=0, inplace=True)
+    dataset["cleaned_dialogue"] = [
+        clean_dialogue(dialogue) for dialogue in dataset["dialogue"]
+    ]
 
-train_data["cleaned_summary"] = [
-    clean_summary(summary) for summary in train_data["summary"]
-]
+    dataset["cleaned_summary"] = [
+        clean_summary(summary) for summary in dataset["summary"]
+    ]
 
-train_data["cleaned_dialogue"].replace("", np.nan, inplace=True)
-train_data["cleaned_summary"].replace("", np.nan, inplace=True)
-train_data.dropna(axis=0, inplace=True)
+    dataset["cleaned_dialogue"].replace("", np.nan, inplace=True)
+    dataset["cleaned_summary"].replace("", np.nan, inplace=True)
+    dataset.dropna(axis=0, inplace=True)
+    dataset.drop(
+        dataset[
+            dataset["cleaned_dialogue"].apply(lambda x: len(x.split()) >= 240)
+        ].index,
+        inplace=True,
+    )
+    dataset.drop(
+        dataset[dataset["cleaned_summary"].apply(lambda x: len(x.split()) >= 80)].index,
+        inplace=True,
+    )
+    return dataset
 
-print(train_data.dialogue[0])
-print(train_data.cleaned_dialogue[0])
-print(train_data.summary[0])
-print(train_data.cleaned_summary[0])
+
+def show_word_count(dataframe: pd.DataFrame):
+    dialogue_word_count = []
+    summary_word_count = []
+
+    for dialogue in dataframe["cleaned_dialogue"]:
+        dialogue_word_count.append(len(dialogue.split()))
+
+    for summary in dataframe["cleaned_summary"]:
+        summary_word_count.append(len(summary.split()))
+
+    length_df = pd.DataFrame(
+        {"Dialogue": dialogue_word_count, "Summary": summary_word_count}
+    )
+    sns.histplot(data=length_df)
+    plt.show()
