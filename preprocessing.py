@@ -128,7 +128,7 @@ contraction_mapping = {
     "you're": "you are",
     "you've": "you have",
 }
-stop_words = set(stopwords.words("english"))
+english_stop_words = set(stopwords.words("english"))
 
 
 def clean_dialogue(raw_dialogue: str) -> str:
@@ -136,7 +136,6 @@ def clean_dialogue(raw_dialogue: str) -> str:
     cleaned_dialogue = re.sub(r"\([^)]*\)", "", cleaned_dialogue)
     cleaned_dialogue = re.sub("'ll", " will", cleaned_dialogue)
     cleaned_dialogue = re.sub("[\n\t\r\f\v]|#.*#|:", " ", cleaned_dialogue)
-    cleaned_dialogue = re.sub(" +", " ", cleaned_dialogue)
     cleaned_dialogue = " ".join(
         [
             contraction_mapping[t] if t in contraction_mapping else t
@@ -144,8 +143,9 @@ def clean_dialogue(raw_dialogue: str) -> str:
         ]
     )
     cleaned_dialogue = re.sub("[^a-zA-Z]", " ", cleaned_dialogue)
+    cleaned_dialogue = re.sub(" +", " ", cleaned_dialogue)
     cleaned_dialogue = " ".join(
-        [w for w in cleaned_dialogue.split() if w not in stop_words]
+        [w for w in cleaned_dialogue.split() if w not in english_stop_words]
     )
     return cleaned_dialogue
 
@@ -163,46 +163,43 @@ def clean_summary(raw_summary: str) -> str:
     )
     cleaned_summary = re.sub("[^a-zA-Z]", " ", cleaned_summary)
     cleaned_summary = re.sub(" +", " ", cleaned_summary)
+    cleaned_summary = " ".join(
+        [w for w in cleaned_summary.split() if w not in english_stop_words]
+    )
+    # preparing summary in a _START_[text]_END_ format for our network
     cleaned_summary = "_START_ " + cleaned_summary + " _END_"
     return cleaned_summary
 
 
-def clean_dataset(dataset: pd.DataFrame) -> pd.DataFrame:
-    dataset.set_index("id", drop=True, inplace=True)
-    dataset.drop_duplicates(subset="dialogue", inplace=True)
-    dataset.dropna(axis=0, inplace=True)
-    dataset["cleaned_dialogue"] = [
-        clean_dialogue(dialogue) for dialogue in dataset["dialogue"]
-    ]
+def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    df.set_index("id", drop=True, inplace=True)
+    df.drop_duplicates(subset="dialogue", inplace=True)
+    df.dropna(axis=0, inplace=True)
+    df["cleaned_dialogue"] = [clean_dialogue(dialogue) for dialogue in df["dialogue"]]
 
-    dataset["cleaned_summary"] = [
-        clean_summary(summary) for summary in dataset["summary"]
-    ]
-
-    dataset["cleaned_dialogue"].replace("", np.nan, inplace=True)
-    dataset["cleaned_summary"].replace("", np.nan, inplace=True)
-    dataset.dropna(axis=0, inplace=True)
-    dataset.drop(
-        dataset[
-            dataset["cleaned_dialogue"].apply(lambda x: len(x.split()) >= 240)
-        ].index,
+    df["cleaned_summary"] = [clean_summary(summary) for summary in df["summary"]]
+    df.drop(
+        df[df["cleaned_dialogue"].apply(lambda x: len(x.split()) >= 150)].index,
         inplace=True,
     )
-    dataset.drop(
-        dataset[dataset["cleaned_summary"].apply(lambda x: len(x.split()) >= 80)].index,
+    df.drop(
+        df[df["cleaned_summary"].apply(lambda x: len(x.split()) >= 50)].index,
         inplace=True,
     )
-    return dataset
+    df["cleaned_dialogue"].replace("", np.nan, inplace=True)
+    df["cleaned_summary"].replace("", np.nan, inplace=True)
+    df.dropna(axis=0, inplace=True)
+    return df
 
 
-def show_word_count(dataframe: pd.DataFrame):
+def show_dialogue_summary_word_count(df: pd.DataFrame):
     dialogue_word_count = []
     summary_word_count = []
 
-    for dialogue in dataframe["cleaned_dialogue"]:
+    for dialogue in df["cleaned_dialogue"]:
         dialogue_word_count.append(len(dialogue.split()))
 
-    for summary in dataframe["cleaned_summary"]:
+    for summary in df["cleaned_summary"]:
         summary_word_count.append(len(summary.split()))
 
     length_df = pd.DataFrame(
