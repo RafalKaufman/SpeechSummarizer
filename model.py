@@ -12,35 +12,40 @@ test_data = clean_dataframe(pd.read_csv("data\\test.csv"))
 # show_dialogue_summary_word_count(validation_data)
 # show_dialogue_summary_word_count(test_data)
 
+# parameters chosen based of the word_count plots
 max_len_dialogue = 150
 max_len_summary = 50
 
-# prepare a tokenizer for reviews on training data
-x_tokenizer = Tokenizer()
-x_tokenizer.fit_on_texts(list(train_data["cleaned_dialogue"]))
+# tokenizing cleaned training dialogues
+train_dialogue_tokenizer = Tokenizer()
+train_dialogue_tokenizer.fit_on_texts(train_data["cleaned_dialogue"])
 
-# convert text sequences into integer sequences
-x_tr = x_tokenizer.texts_to_sequences(train_data["cleaned_dialogue"])
-x_val = x_tokenizer.texts_to_sequences(validation_data["cleaned_dialogue"])
+# converting dialogues into integer sequences
+x_train = train_dialogue_tokenizer.texts_to_sequences(train_data["cleaned_dialogue"])
+x_validate = train_dialogue_tokenizer.texts_to_sequences(
+    validation_data["cleaned_dialogue"]
+)
 
-# padding zero upto maximum length
-x_tr = pad_sequences(x_tr, maxlen=max_len_dialogue, padding="post")
-x_val = pad_sequences(x_val, maxlen=max_len_dialogue, padding="post")
+# padding sequences to the same length (from 0 up to max_len_dialogue)
+x_train = pad_sequences(x_train, maxlen=max_len_dialogue, padding="post")
+x_validate = pad_sequences(x_validate, maxlen=max_len_dialogue, padding="post")
 
-x_voc_size = len(x_tokenizer.word_index) + 1
+x_voc_size = len(train_dialogue_tokenizer.word_index) + 1
 print(x_voc_size)
 # -----------------------------------------------------------------------
-# preparing a tokenizer for summary on training data
-y_tokenizer = Tokenizer()
-y_tokenizer.fit_on_texts(list(train_data["cleaned_summary"]))
+# tokenizing cleaned training summaries
+train_summary_tokenizer = Tokenizer()
+train_summary_tokenizer.fit_on_texts(train_data["cleaned_summary"])
 
-# convert summary sequences into integer sequences
-y_tr = y_tokenizer.texts_to_sequences(train_data["cleaned_summary"])
-y_val = y_tokenizer.texts_to_sequences(validation_data["cleaned_summary"])
+# converting summaries into integer sequences
+y_train = train_summary_tokenizer.texts_to_sequences(train_data["cleaned_summary"])
+y_validate = train_summary_tokenizer.texts_to_sequences(
+    validation_data["cleaned_summary"]
+)
 
-# padding zero upto maximum length
-y_tr = pad_sequences(y_tr, maxlen=max_len_summary, padding="post")
-y_val = pad_sequences(y_val, maxlen=max_len_summary, padding="post")
+# padding sequences to the same length (from 0 up to max_len_summary)
+y_train = pad_sequences(y_train, maxlen=max_len_summary, padding="post")
+y_validate = pad_sequences(y_validate, maxlen=max_len_summary, padding="post")
 
-y_voc_size = len(y_tokenizer.word_index) + 1
+y_voc_size = len(train_summary_tokenizer.word_index) + 1
 print(y_voc_size)
