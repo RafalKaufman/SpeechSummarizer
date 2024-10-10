@@ -179,11 +179,11 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     df["cleaned_summary"] = [clean_summary(summary) for summary in df["summary"]]
     df.drop(
-        df[df["cleaned_dialogue"].apply(lambda x: len(x.split()) >= 150)].index,
+        df[df["cleaned_dialogue"].apply(lambda x: len(x.split()) >= 60)].index,
         inplace=True,
     )
     df.drop(
-        df[df["cleaned_summary"].apply(lambda x: len(x.split()) >= 50)].index,
+        df[df["cleaned_summary"].apply(lambda x: len(x.split()) >= 10)].index,
         inplace=True,
     )
     df["cleaned_dialogue"].replace("", np.nan, inplace=True)
