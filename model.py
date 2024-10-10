@@ -27,6 +27,7 @@ test_data = clean_dataframe(pd.read_csv("data\\test.csv"))
 max_len_dialogue = 150
 max_len_summary = 50
 
+# -----------------------------------------------------------------------
 # tokenizing cleaned training dialogues
 train_dialogue_tokenizer = Tokenizer()
 train_dialogue_tokenizer.fit_on_texts(train_data["cleaned_dialogue"])
@@ -43,6 +44,7 @@ x_validate = pad_sequences(x_validate, maxlen=max_len_dialogue, padding="post")
 
 x_voc_size = len(train_dialogue_tokenizer.word_index) + 1
 print(x_voc_size)
+
 # -----------------------------------------------------------------------
 # tokenizing cleaned training summaries
 train_summary_tokenizer = Tokenizer()
@@ -60,6 +62,7 @@ y_validate = pad_sequences(y_validate, maxlen=max_len_summary, padding="post")
 
 y_voc_size = len(train_summary_tokenizer.word_index) + 1
 print(y_voc_size)
+
 # ------Encoder-----------------------------------------------------------------
 K.clear_session()
 word_vector_dim = 500
@@ -79,6 +82,7 @@ encoder_output2, state_h2, state_c2 = encoder_lstm2(encoder_output1)
 # LSTM 3
 encoder_lstm3 = LSTM(word_vector_dim, return_state=True, return_sequences=True)
 encoder_outputs, state_h, state_c = encoder_lstm3(encoder_output2)
+
 # ------Decoder-----------------------------------------------------------------
 decoder_inputs = Input(shape=(None,))
 decoder_embedding = Embedding(y_voc_size, word_vector_dim, trainable=True)
@@ -89,16 +93,19 @@ decoder_lstm = LSTM(word_vector_dim, return_sequences=True, return_state=True)
 decoder_outputs, decoder_fwd_state, decoder_back_state = decoder_lstm(
     decoder_embedding_inputs, initial_state=[state_h, state_c]
 )
+
 # ------Attention Layer-----------------------------------------------------------------
 attention = Attention()
 attention_outputs = attention([decoder_outputs, encoder_outputs])
 
 concatenate = Concatenate(axis=-1)
 decoder_concat_input = concatenate([decoder_outputs, attention_outputs])
+
 # ------Dense layer-----------------------------------------------------------------
 decoder_dense = TimeDistributed(Dense(y_voc_size, activation="softmax"))
 decoder_outputs = decoder_dense(decoder_concat_input)
 
-# Define the model
+# -----------------------------------------------------------------------
+# defining the model
 model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
 model.summary()
